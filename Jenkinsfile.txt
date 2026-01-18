@@ -13,8 +13,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'C:\Users\vamshi\complete-devops-project'
+                git branch: 'master',
+                    url: 'https://github.com/vamshi6721/complete-devops-project'
             }
         }
 
