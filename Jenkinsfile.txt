@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk11'
+    }
+
+    parameters {
+        string(name: 'VERSION', defaultValue: '1.0.0')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'test', 'staging'])
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'C:\Users\vamshi\complete-devops-project'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'chmod +x scripts/build.sh'
+                sh './scripts/build.sh'
+            }
+        }
+
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh 'java -cp src/main/java:src/test/java com.devops.CalculatorTest'
+                    }
+                }
+                stage('Integration Test') {
+                    steps {
+                        sh 'echo "Integration test simulated"'
+                    }
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh '''
+                    mkdir -p package
+                    cp calculator.jar package/
+                    cp Dockerfile package/
+                    echo "version=${VERSION}" > package/version.txt
+                '''
+            }
+        }
+
+        stage('Deploy') {
+            when {
+                expression { params.ENVIRONMENT != 'dev' }
+            }
+            steps {
+                echo "Deploying to ${params.ENVIRONMENT}"
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'package/**'
+        }
+        success {
+            echo " DevOps workflow completed successfully!"
+        }
+        failure {
+            echo " DevOps workflow failed!"
+        }
+    }
+}
